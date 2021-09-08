@@ -1,0 +1,176 @@
+<html>
+<body>
+
+<h2>Hints for Exercise 3.1</h2>
+
+<h3>CurrencyConverter.java</h3>
+
+<pre><font color="grey">
+// TODO: 
+// 1. Add the annotation that tells JAX-WS that this interface defines a 
+//    Web service named "CurrencyConverter" </font><font color="blue">
+@WebService(name="CurrencyConverter") </font><font color="grey">
+public interface CurrencyConverter {
+    // TODO:
+    // 1. Set the name of the WSDL operation's result to "convertedAmount"
+    // 2. Set the name of the WSDL operation's first parameter to "fromAmount"
+    // 3. Set the name of the WSDL operation's second parameter to "toCurrency" </font><font color="blue">
+    public @WebResult(name="convertedAmount") Amount getConvertedAmount(
+            @WebParam(name="fromAmount") Amount from, 
+            @WebParam(name="toCurrency") Currency toCurrency) 
+                    throws CurrencyLookupException;
+</font></pre>
+
+<h3>CurrencyConverterImpl.java</h3>
+
+<pre><font color="grey">
+// TODO: Add the annotation that tells JAX-WS that this class is the implementation
+//       of the Web service defined by the interface CurrencyConverter
+// TODO: add an "implements" clause so the Java compiler knows that this class
+//       implements the CurrencyConverter interface </font><font color="blue">
+@WebService(endpointInterface="com.gdr.forex.CurrencyConverter") </font><font color="grey">
+public class CurrencyConverterImpl </font><font color="blue">implements CurrencyConverter</font><font color="grey"> {
+</font></pre>
+
+<h3>CurrencyLookupException.java</h3>
+
+<pre><font color="grey">// TODO: Mark this class as a Web fault named "conversionFaultInfo"</font>
+<font color="blue">@WebFault(name = "conversionFaultInfo")</font>
+<font color="grey">public class CurrencyLookupException extends Exception {
+</font></pre>
+
+<h3>web.xml</h3>
+
+<font color="grey"><pre>    &lt;servlet-mapping&gt;</font>
+<font color="grey">        &lt;servlet-name&gt;jaxws_endpoint&lt;/servlet-name&gt;</font>
+<font color="grey">        &lt;!-- TODO: Set the URL pattern to be /currencyconverter --&gt;</font>
+<font color="blue">        &lt;url-pattern&gt;/currencyconverter&lt;/url-pattern&gt;</font>
+<font color="grey">    &lt;/servlet-mapping&gt;</font></pre>
+
+<h3>sun-jaxws.xml</h3>
+
+<font color="grey"><pre>    &lt;!-- TODO: Add an endpoint for the Currency Converter Web service.</font>
+<font color="grey">               Use /currencyconverter as the URL pattern --&gt;</font>
+<font color="blue">    &lt;endpoint </font>
+<font color="blue">        name='Currency Converter'</font>
+<font color="blue">        url-pattern='/currencyconverter' </font>
+<font color="blue">        implementation='com.gdr.forex.CurrencyConverterImpl' /&gt;</font></pre>
+
+<h2>BONUS: set &lt;service> and &lt;port> element names</h2>
+
+<h3>CurrencyConverterImpl.java</h3>
+
+<pre><font color="grey">
+@WebService(endpointInterface="com.gdr.forex.CurrencyConverter"</font><font color="blue">,
+            serviceName="CurrencyConverterService",
+            portName="CurrencyConverterSoapPort"</font><font color="grey">)
+</font></pre>
+
+<h2>BONUS: customize a SOAP fault</h2>
+
+<h3>ValueOutOfRangeException.java</h3>
+
+<font color="grey"><pre>
+// BONUS TODO: Create the ValueOutOfRangeException class.
+</pre></font>
+<font color="blue"><pre>
+@WebFault(name="valueOutOfRangeFaultInfo")
+public class ValueOutOfRangeException extends Exception {
+    private ValueOutOfRangeFaultDetail faultInfo;
+
+    /** Convenience constructor */
+    public ValueOutOfRangeException(String message, BigDecimal value) {
+        this(message, new ValueOutOfRangeFaultDetail(value));
+    }
+
+    /** Constructor required by JAX-WS specification */
+    public ValueOutOfRangeException(String message, 
+                    ValueOutOfRangeFaultDetail faultInfo) {
+        this(message, faultInfo, null);
+    }
+
+    /** Constructor required by JAX-WS specification */
+    public ValueOutOfRangeException(String message, 
+                    ValueOutOfRangeFaultDetail faultInfo, Throwable cause) {
+        super(message, cause);
+        this.faultInfo = faultInfo;
+    }
+    
+    public ValueOutOfRangeFaultDetail getFaultInfo() {
+        return faultInfo;
+    }
+
+}
+</pre></font>
+
+<h3>ValueOutOfRangeFaultDetail.java</h3>
+
+<font color="grey"><pre>
+// BONUS TODO: create the ValueOutOfRangeFaultDetail class.
+</pre></font>
+<font color="blue"><pre>
+public class ValueOutOfRangeFaultDetail {
+    private BigDecimal value;
+
+    public ValueOutOfRangeFaultDetail(BigDecimal value) {
+        this.value = value;
+    }
+
+    public BigDecimal getValue() {
+        return value;
+    }
+
+    public void setValue(BigDecimal value) {
+        this.value = value;
+    }
+
+}
+</pre></font>
+
+<h3>CurrencyConverterImpl.java</h3>
+
+<font color="grey"><pre>
+    @Override
+    public Amount getConvertedAmount(Amount from, Currency toCurrency) 
+                    throws CurrencyLookupException</font><font color="blue">, ValueOutOfRangeException </font><font color="grey">{</font><font color="blue">
+        double fromValue = from.getValue().doubleValue();
+        if (fromValue < 0 || fromValue > 1000000000) {
+            throw new ValueOutOfRangeException(
+                "Value is out of range 0 < value &lt;= 1000000000", from.getValue());
+        }</font><font color="grey">
+</pre></font>
+
+
+<h3>CurrencyConverter.java</h3>
+
+<font color="grey"><pre>
+    public @WebResult(name="convertedAmount") Amount getConvertedAmount(
+            @WebParam(name="fromAmount") Amount from, 
+            @WebParam(name="toCurrency") Currency toCurrency) 
+                    throws CurrencyLookupException</font><font color="blue">, ValueOutOfRangeException;
+</pre></font>
+
+<h3>CurrencyConverterTest.java</h3>
+
+<font color="blue"><pre>
+    @Test(expected=ValueOutOfRangeException.class)
+    public void testNegativeAmount() throws Exception {
+        Amount fromAmount = new Amount(new BigDecimal("-1.00"), Currency.USD);
+        converter.getConvertedAmount(fromAmount, Currency.EUR);
+    }
+</pre></font>
+
+<h3>ForexClient.java</h3>
+
+<font color="blue"><pre>
+import com.ltree.converter.generated.ValueOutOfRangeException;
+import com.ltree.converter.generated.ValueOutOfRangeFaultDetail; </font><font color="grey">
+... </font><font color="blue">
+        catch (ValueOutOfRangeException e) {
+            ValueOutOfRangeFaultDetail faultInfo = e.getFaultInfo();
+            System.err.println(e + ": " + faultInfo.getValue());
+        } </font><font color="grey">
+</pre></font>
+
+</body>
+</html>

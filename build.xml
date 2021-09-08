@@ -1,0 +1,43 @@
+<project name="ex03" basedir="." default="deploy">
+    <property name="appname" value="${ant.project.name}" />
+
+    <import file="../build-common.xml" />
+    
+    <property name="wsgen.sei" value="com.gdr.forex.CurrencyConverterImpl" />
+    
+    <property name="wsdl.url" value="http://localhost:8080/${appname}/currencyconverter?wsdl" />
+    
+    <target name="wsgen" 
+            depends="common.wsgen" 
+            description="Runs wsgen from build-common.xml">
+        <!-- See build-common.xml for definitions of common targets -->
+    </target>
+    
+    <target name="build-web-service"
+            depends="wsgen"
+            description="Builds a code-first JAX-WS service">
+    </target>
+    
+    <target name="deploy"
+            depends="build-web-service, common.deploy"
+            description="Deploys the web service">
+        <echo>To test the service, visit ${wsdl.url}</echo>
+    </target>
+    
+    <property name="wsimport.wsdl" value="${wsdl.url}" />
+    <property name="wsimport.package" value="com.ltree.converter.generated" />
+
+    <!-- Run this target if the service WSDL changes -->
+    <target name="build-client" 
+            depends="common.wsimport"
+    	    description="Runs wsimport to generate client artifacts">
+    </target>
+    
+    <target name="debug" 
+            depends="common.debug" 
+            description="Dumps values of Ant properties">
+        <echo>$${wsgen.sei} = ${wsgen.sei}</echo>
+        <echo>$${wsdl.url} = ${wsdl.url}</echo>
+    </target>
+    
+</project>
